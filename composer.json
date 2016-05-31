@@ -1,0 +1,25 @@
+{
+  "name": "uwdoem/secure-upload-field",
+  "description": "Athens field for securely uploading files",
+  "autoload": {
+    "classmap": [
+      "src/"
+    ]
+  },
+  "autoload-dev": {
+    "classmap": [
+      "test/"
+    ]
+  },
+  "require": {
+    "propel/propel": "~2.0@dev",
+    "athens/core": "0.*",
+    "uwdoem/secure-upload": "0.*"
+  },
+  "require-dev": {
+    "phpdocumentor/phpdocumentor": "2.7.*",
+    "phpunit/phpunit": "4.5.*",
+    "codeclimate/php-test-reporter": "dev-master",
+    "athens/standard": "*"
+  }
+}
