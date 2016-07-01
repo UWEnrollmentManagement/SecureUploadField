@@ -2,18 +2,17 @@
 
 namespace UWDOEM\SecureUploads;
 
-use Athens\Core\Field\FieldInterface;
 use Athens\Core\Field\Field;
-use Athens\Core\Writer\WritableTrait;
+use Athens\Core\Etc\ArrayUtils;
 
 class SecureUploadField extends Field
 {
-    
-    protected $hasBeenCiphered = false;
-    
-    public function getFilePrefix()
+    protected $destinationPath = "";
+    protected $fileNamePrefix = "";
+
+    public function setFileNamePrefix($fileNamePrefix)
     {
-        
+        $this->fileNamePrefix = $fileNamePrefix;
     }
 
     protected function getUploadedFileName()
@@ -23,19 +22,22 @@ class SecureUploadField extends Field
 
     public function wasSubmitted()
     {
+
         return array_key_exists($this->getSlug(), $_FILES) === true && $this->getUploadedFileName() !== '';
     }
-    
-    public function getSubmitted()
+
+    public function getValidatedData()
     {
-        $_FILES[$this->getSlug()]['name'] = $this->getFilePrefix() . $this->getUploadedFileName();
-        
-        $fileName = Cipher::cleanFilename($_FILES[$this->getSlug()]['name']);
-        
-        if ($this->hasBeenCiphered === false) {
-            Cipher::encrypt($this->getSlug(), SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH, SECURE_UPLOAD_PUBLIC_KEY_PATH);
+        if ($this->destinationPath === "" && $this->wasSubmitted() === true) {
+            $_FILES[$this->getSlug()]['name'] = $this->fileNamePrefix . $this->getUploadedFileName();
+
+            $fileName = Cipher::cleanFilename($_FILES[$this->getSlug()]['name']);
+
+            Cipher::encrypt($this->getSlug(), SECURE_UPLOAD_DESTINATION_PATH_PREFIX, SECURE_UPLOAD_PUBLIC_KEY_PATH);
+
+            $this->destinationPath = SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . $fileName;
         }
-        
-        return $fileName;
+
+        return $this->destinationPath;
     }
 }

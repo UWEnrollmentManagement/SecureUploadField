@@ -41,7 +41,8 @@ class FieldTest extends PHPUnit_Framework_TestCase
     public function testEncryptDecrypt()
     {
         define('SECURE_UPLOAD_PUBLIC_KEY_PATH', __DIR__ . '/certs/publickey.cer');
-        define('SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH', __DIR__ . '/tmp/secure/');
+        define('SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH', 'https://example.com/files');
+        define('SECURE_UPLOAD_DESTINATION_PATH_PREFIX', __DIR__ . '/tmp/secure/');
 
         if (!is_dir(__DIR__ . '/tmp')) {
             mkdir(__DIR__ . '/tmp');
@@ -76,9 +77,9 @@ class FieldTest extends PHPUnit_Framework_TestCase
         ];
 
         // Force encryption
-        $field->getSubmitted();
+        $field->getValidatedData();
 
-        $location = SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . '/' . scandir(SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH)[2];
+        $location = SECURE_UPLOAD_DESTINATION_PATH_PREFIX . '/' . scandir(SECURE_UPLOAD_DESTINATION_PATH_PREFIX)[2];
 
         $decryptedLocation = Cipher::decrypt($location, __DIR__ . '/tmp/out/' , __DIR__ . '/certs/privatekey.pem');
 
