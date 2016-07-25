@@ -1,0 +1,7 @@
+<span class="secure-upload-display {{ classes|join(' ') }}" {{ data|writedata|raw }}>
+    {% for link in initial|split(' ') %}
+    <a href="{{ link|escape }}">{{ link|saferaw|raw|split('/')|last }}</a>
+    {% if not loop.first %}<br>{% endif %}
+    {% endfor %}
+</span>
+{% include "field/errors.twig" %}

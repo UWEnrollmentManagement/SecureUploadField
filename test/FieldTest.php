@@ -1,18 +1,13 @@
 <?php
 
-namespace Athens\Encryption\Test;
+namespace UWDOEM\SecureUploadField\Test;
 
 use PHPUnit_Framework_TestCase;
 
 use UWDOEM\SecureUploads\Cipher;
 
-use UWDOEM\SecureUploads\SecureUploadFieldBuilder;
-use UWDOEM\SecureUploads\SecureUploadField;
-
-define('SECURE_UPLOAD_PUBLIC_KEY_PATH', __DIR__ . '/certs/publickey.cer');
-define('SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH', 'https://example.com/files/');
-define('SECURE_UPLOAD_DESTINATION_PATH_PREFIX', __DIR__ . '/tmp/secure/');
-
+use UWDOEM\SecureUploadField\SecureUploadFieldBuilder;
+use UWDOEM\SecureUploadField\SecureUploadField;
 
 class FieldTest extends PHPUnit_Framework_TestCase
 {

@@ -1,9 +1,11 @@
 <?php
 
-namespace UWDOEM\SecureUploads;
+namespace UWDOEM\SecureUploadField;
 
 use Athens\Core\Field\Field;
 use Athens\Core\Field\FieldInterface;
+
+use UWDOEM\SecureUploads\Cipher;
 
 /**
  * Class SecureUploadField provides a field which can securely handle the upload of

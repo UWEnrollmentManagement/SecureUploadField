@@ -1,6 +1,6 @@
 <?php
 
-namespace UWDOEM\SecureUploads;
+namespace UWDOEM\SecureUploadField;
 
 use Athens\Core\Field\FieldInterface;
 
