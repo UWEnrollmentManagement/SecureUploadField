@@ -9,6 +9,10 @@ use UWDOEM\SecureUploads\Cipher;
 use UWDOEM\SecureUploads\SecureUploadFieldBuilder;
 use UWDOEM\SecureUploads\SecureUploadField;
 
+define('SECURE_UPLOAD_PUBLIC_KEY_PATH', __DIR__ . '/certs/publickey.cer');
+define('SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH', 'https://example.com/files/');
+define('SECURE_UPLOAD_DESTINATION_PATH_PREFIX', __DIR__ . '/tmp/secure/');
+
 
 class FieldTest extends PHPUnit_Framework_TestCase
 {
@@ -45,12 +49,8 @@ class FieldTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($field->wasSubmitted());
     }
 
-    public function testEncryptDecrypt()
+    public function setUp()
     {
-        define('SECURE_UPLOAD_PUBLIC_KEY_PATH', __DIR__ . '/certs/publickey.cer');
-        define('SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH', 'https://example.com/files');
-        define('SECURE_UPLOAD_DESTINATION_PATH_PREFIX', __DIR__ . '/tmp/secure/');
-
         if (!is_dir(__DIR__ . '/tmp')) {
             mkdir(__DIR__ . '/tmp');
         }
@@ -62,7 +62,21 @@ class FieldTest extends PHPUnit_Framework_TestCase
         if (!is_dir(__DIR__ . '/tmp/secure')) {
             mkdir(__DIR__ . '/tmp/secure');
         }
+    }
 
+    public function tearDown()
+    {
+        // Delete everything in the tmp directory
+        array_map('unlink', glob(__DIR__ . "/tmp/out/*"));
+        rmdir(__DIR__ . '/tmp/out');
+        array_map('unlink', glob(__DIR__ . "/tmp/secure/*"));
+        rmdir(__DIR__ . '/tmp/secure');
+        array_map('unlink', glob(__DIR__ . "/tmp/*"));
+        rmdir(__DIR__ . '/tmp');
+    }
+
+    protected function createFile()
+    {
         $data = '';
         for($i = 0; $i < 100; $i++) {
             $data .= str_shuffle('abcdefeghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789');
@@ -73,14 +87,22 @@ class FieldTest extends PHPUnit_Framework_TestCase
 
         file_put_contents($fileLocation, $data);
 
+        return $fileLocation;
+    }
+
+    public function testEncryptDecryptSingleUpload()
+    {
         $field = SecureUploadFieldBuilder::begin()
-            ->setType('secure-upload')
-            ->setLabel('label')
+            ->setType(SecureUploadFieldBuilder::TYPE_SECURE_UPLOAD)
+            ->setLabel('label-for-single')
             ->build();
+
+        $fileLocation = $this->createFile();
+        $fileName = array_slice(explode('/', $fileLocation), -1)[0];
 
         $_FILES[$field->getSlug()] = [
             'tmp_name' => $fileLocation,
-            'name' => $filename,
+            'name' => $fileName,
         ];
 
         // Force encryption
@@ -90,14 +112,109 @@ class FieldTest extends PHPUnit_Framework_TestCase
 
         $decryptedLocation = Cipher::decrypt($location, __DIR__ . '/tmp/out/' , __DIR__ . '/certs/privatekey.pem');
 
-        $this->assertEquals($data, trim(file_get_contents($decryptedLocation)));
+        $originalData = trim(file_get_contents($fileLocation));
+        $decryptedData = trim(file_get_contents($decryptedLocation));
 
-        // Delete everything in the tmp directory
-        array_map('unlink', glob(__DIR__ . "/tmp/out/*"));
-        rmdir(__DIR__ . '/tmp/out');
-        array_map('unlink', glob(__DIR__ . "/tmp/secure/*"));
-        rmdir(__DIR__ . '/tmp/secure');
-        array_map('unlink', glob(__DIR__ . "/tmp/*"));
-        rmdir(__DIR__ . '/tmp');
+        $this->assertEquals($originalData, $decryptedData);
+    }
+
+    public function testValidatedDataSingleUpload()
+    {
+        $field = SecureUploadFieldBuilder::begin()
+            ->setType(SecureUploadFieldBuilder::TYPE_SECURE_UPLOAD)
+            ->setLabel('label-for-single')
+            ->build();
+
+        $fileLocation = $this->createFile();
+        $fileName = array_slice(explode('/', $fileLocation), -1)[0];
+
+        $_FILES[$field->getSlug()] = [
+            'tmp_name' => $fileLocation,
+            'name' => $fileName,
+        ];
+
+        $validatedData = $field->getValidatedData();
+        $expectedData = SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . Cipher::cleanFilename($fileName);
+
+        $this->assertEquals($expectedData, $validatedData);
+    }
+
+    public function testEncryptDecryptMultipleUpload()
+    {
+        $field = SecureUploadFieldBuilder::begin()
+            ->setType(SecureUploadFieldBuilder::TYPE_SECURE_UPLOAD_MULTIPLE)
+            ->setLabel('label-for-multiple')
+            ->build();
+
+        $fileLocations = [$this->createFile(), $this->createFile(), $this->createFile()];
+        $fileNames = array_map(
+            function($fileLocation) {
+                return array_slice(explode('/', $fileLocation), -1)[0];
+            },
+            $fileLocations
+        );
+
+        $_FILES[$field->getSlug()] = [
+            'tmp_name' => $fileLocations,
+            'name' => $fileNames,
+        ];
+
+        $originalData = [];
+        foreach ($fileLocations as $fileLocation) {
+            $originalData[] = trim(file_get_contents($fileLocation));
+        }
+        sort($originalData);
+
+        // Force encryption
+        $field->getValidatedData();
+
+        $locations = scandir(SECURE_UPLOAD_DESTINATION_PATH_PREFIX);
+        $locations = array_filter(
+            $locations,
+            function($location) {
+                return substr($location, -5) === '.data';
+            }
+        );
+
+        $decryptedData = [];
+        foreach ($locations as $location) {
+            $decryptedLocation = Cipher::decrypt(SECURE_UPLOAD_DESTINATION_PATH_PREFIX . '/' . $location, __DIR__ . '/tmp/out/' , __DIR__ . '/certs/privatekey.pem');
+            $decryptedData[] = trim(file_get_contents($decryptedLocation));
+        }
+        sort($decryptedData);
+
+        $this->assertEquals($originalData, $decryptedData);
+    }
+
+    public function testValidatedDataMultipleUpload()
+    {
+        $field = SecureUploadFieldBuilder::begin()
+            ->setType(SecureUploadFieldBuilder::TYPE_SECURE_UPLOAD_MULTIPLE)
+            ->setLabel('label-for-multiple')
+            ->build();
+
+        $fileLocations = [$this->createFile(), $this->createFile(), $this->createFile()];
+        $fileNames = array_map(
+            function($fileLocation) {
+                return array_slice(explode('/', $fileLocation), -1)[0];
+            },
+            $fileLocations
+        );
+
+        $_FILES[$field->getSlug()] = [
+            'tmp_name' => $fileLocations,
+            'name' => $fileNames,
+        ];
+
+        $validatedData = explode(" ", $field->getValidatedData());
+
+        $expectedData = array_map(
+            function($fileName) {
+                return SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . Cipher::cleanFilename($fileName);
+            },
+            $fileNames
+        );
+
+        $this->assertEquals($expectedData, $validatedData);
     }
 }
