@@ -6,7 +6,7 @@ use Athens\Core\Field\FieldBuilder;
 use Athens\Core\Field\FieldInterface;
 
 
-class SecureUploadFieldBuilder extends FieldBuilder
+class SecureUploadFieldBuilder extends FieldBuilder implements SecureUploadFieldConstantsInterface
 {
 
     /**

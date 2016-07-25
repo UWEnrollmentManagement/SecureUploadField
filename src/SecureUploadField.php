@@ -3,9 +3,8 @@
 namespace UWDOEM\SecureUploads;
 
 use Athens\Core\Field\Field;
-use Athens\Core\Etc\ArrayUtils;
 
-class SecureUploadField extends Field
+class SecureUploadField extends Field implements SecureUploadFieldConstantsInterface
 {
     protected $destinationPath = "";
     protected $fileNamePrefix = "";
@@ -15,27 +14,40 @@ class SecureUploadField extends Field
         $this->fileNamePrefix = $fileNamePrefix;
     }
 
-    protected function getUploadedFileName()
+    protected function getFileNames()
     {
-        return array_key_exists($this->getSlug(), $_FILES) === true ? $_FILES[$this->getSlug()]['name'] : '';
+        return $this->getType() === static::TYPE_SECURE_UPLOAD_MULTIPLE ? $_FILES[$this->getSlug()]['name'] :
+                                                                          [$_FILES[$this->getSlug()]['name']];
+    }
+
+    protected function getFileLocations()
+    {
+        return $this->getType() === static::TYPE_SECURE_UPLOAD_MULTIPLE ? $_FILES[$this->getSlug()]['tmp_name'] :
+                                                                          [$_FILES[$this->getSlug()]['tmp_name']];
     }
 
     public function wasSubmitted()
     {
-
-        return array_key_exists($this->getSlug(), $_FILES) === true && $this->getUploadedFileName() !== '';
+        return array_key_exists($this->getSlug(), $_FILES) === true && $this->getFileNames() !== [];
     }
 
     public function getValidatedData()
     {
         if ($this->destinationPath === "" && $this->wasSubmitted() === true) {
-            $_FILES[$this->getSlug()]['name'] = $this->fileNamePrefix . $this->getUploadedFileName();
 
-            $fileName = Cipher::cleanFilename($_FILES[$this->getSlug()]['name']);
+            $fileNames = $this->getFileNames();
+            $fileLocations = $this->getFileLocations();
 
-            Cipher::encrypt($this->getSlug(), SECURE_UPLOAD_DESTINATION_PATH_PREFIX, SECURE_UPLOAD_PUBLIC_KEY_PATH);
-
-            $this->destinationPath = SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . $fileName;
+            $destinationPaths = [];
+            foreach (array_combine($fileLocations, $fileNames) as $fileLocation => $fileName) {
+                $fileName = Cipher::cleanFilename($this->fileNamePrefix . $fileName);
+                
+                Cipher::encrypt($fileName, $fileLocation, SECURE_UPLOAD_DESTINATION_PATH_PREFIX, SECURE_UPLOAD_PUBLIC_KEY_PATH);
+                
+                $destinationPaths[] = SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . $fileName;
+            }
+            
+            $this->destinationPath = implode(" ", $destinationPaths);
         }
 
         return $this->destinationPath;

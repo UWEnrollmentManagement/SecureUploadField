@@ -1,0 +1,5 @@
+<span class="secure-upload-field {{ classes|join(' ') }}" {{ data|writedata|raw }}>
+    <input type="file" name="{{ slug }}[]" multiple/>
+</span>
+
+{% include "field/errors.twig" %}
