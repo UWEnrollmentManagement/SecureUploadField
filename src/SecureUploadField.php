@@ -11,7 +11,7 @@ use Athens\Core\Field\FieldInterface;
  *
  * @package UWDOEM\SecureUploads
  */
-class SecureUploadField extends Field implements SecureUploadFieldConstantsInterface
+class SecureUploadField extends Field implements SecureUploadFieldInterface
 {
     /** @var string */
     protected $destinationPath = "";

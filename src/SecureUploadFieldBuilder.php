@@ -16,7 +16,7 @@ class SecureUploadFieldBuilder extends FieldBuilder implements SecureUploadField
 {
 
     /**
-     * @return FieldInterface
+     * @return FieldInterface|SecureUploadFieldInterface
      */
     public function build()
     {
