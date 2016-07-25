@@ -125,6 +125,10 @@ class FieldTest extends PHPUnit_Framework_TestCase
             ->setLabel('label-for-single')
             ->build();
 
+        $prefix = (string)rand() . "-";
+
+        $field->setFileNamePrefix($prefix);
+
         $fileLocation = $this->createFile();
         $fileName = array_slice(explode('/', $fileLocation), -1)[0];
 
@@ -134,7 +138,7 @@ class FieldTest extends PHPUnit_Framework_TestCase
         ];
 
         $validatedData = $field->getValidatedData();
-        $expectedData = SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . Cipher::cleanFilename($fileName);
+        $expectedData = SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . $prefix . Cipher::cleanFilename($fileName);
 
         $this->assertEquals($expectedData, $validatedData);
     }
@@ -197,6 +201,10 @@ class FieldTest extends PHPUnit_Framework_TestCase
             ->setLabel('label-for-multiple')
             ->build();
 
+        $prefix = (string)rand() . "-";
+
+        $field->setFileNamePrefix($prefix);
+
         $fileLocations = [$this->createFile(), $this->createFile(), $this->createFile()];
         $fileNames = array_map(
             function ($fileLocation) {
@@ -213,8 +221,8 @@ class FieldTest extends PHPUnit_Framework_TestCase
         $validatedData = explode(" ", $field->getValidatedData());
 
         $expectedData = array_map(
-            function ($fileName) {
-                return SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . Cipher::cleanFilename($fileName);
+            function ($fileName) use ($prefix) {
+                return SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . $prefix . Cipher::cleanFilename($fileName);
             },
             $fileNames
         );
