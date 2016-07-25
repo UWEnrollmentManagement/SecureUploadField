@@ -5,7 +5,13 @@ namespace UWDOEM\SecureUploads;
 use Athens\Core\Field\FieldBuilder;
 use Athens\Core\Field\FieldInterface;
 
-
+/**
+ * Class SecureUploadFieldBuilder builds SecureUploadFields
+ *
+ * Will defer to Athens\Core\Field\FieldBuilder if field type is not secure upload.
+ *
+ * @package UWDOEM\SecureUploads
+ */
 class SecureUploadFieldBuilder extends FieldBuilder implements SecureUploadFieldConstantsInterface
 {
 
@@ -31,5 +37,4 @@ class SecureUploadFieldBuilder extends FieldBuilder implements SecureUploadField
             return parent::build();
         }
     }
-
 }

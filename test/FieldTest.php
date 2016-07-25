@@ -78,7 +78,7 @@ class FieldTest extends PHPUnit_Framework_TestCase
     protected function createFile()
     {
         $data = '';
-        for($i = 0; $i < 100; $i++) {
+        for ($i = 0; $i < 100; $i++) {
             $data .= str_shuffle('abcdefeghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789');
         }
 
@@ -110,7 +110,7 @@ class FieldTest extends PHPUnit_Framework_TestCase
 
         $location = SECURE_UPLOAD_DESTINATION_PATH_PREFIX . '/' . scandir(SECURE_UPLOAD_DESTINATION_PATH_PREFIX)[2];
 
-        $decryptedLocation = Cipher::decrypt($location, __DIR__ . '/tmp/out/' , __DIR__ . '/certs/privatekey.pem');
+        $decryptedLocation = Cipher::decrypt($location, __DIR__ . '/tmp/out/', __DIR__ . '/certs/privatekey.pem');
 
         $originalData = trim(file_get_contents($fileLocation));
         $decryptedData = trim(file_get_contents($decryptedLocation));
@@ -148,7 +148,7 @@ class FieldTest extends PHPUnit_Framework_TestCase
 
         $fileLocations = [$this->createFile(), $this->createFile(), $this->createFile()];
         $fileNames = array_map(
-            function($fileLocation) {
+            function ($fileLocation) {
                 return array_slice(explode('/', $fileLocation), -1)[0];
             },
             $fileLocations
@@ -171,14 +171,18 @@ class FieldTest extends PHPUnit_Framework_TestCase
         $locations = scandir(SECURE_UPLOAD_DESTINATION_PATH_PREFIX);
         $locations = array_filter(
             $locations,
-            function($location) {
+            function ($location) {
                 return substr($location, -5) === '.data';
             }
         );
 
         $decryptedData = [];
         foreach ($locations as $location) {
-            $decryptedLocation = Cipher::decrypt(SECURE_UPLOAD_DESTINATION_PATH_PREFIX . '/' . $location, __DIR__ . '/tmp/out/' , __DIR__ . '/certs/privatekey.pem');
+            $decryptedLocation = Cipher::decrypt(
+                SECURE_UPLOAD_DESTINATION_PATH_PREFIX . '/' . $location,
+                __DIR__ . '/tmp/out/',
+                __DIR__ . '/certs/privatekey.pem'
+            );
             $decryptedData[] = trim(file_get_contents($decryptedLocation));
         }
         sort($decryptedData);
@@ -195,7 +199,7 @@ class FieldTest extends PHPUnit_Framework_TestCase
 
         $fileLocations = [$this->createFile(), $this->createFile(), $this->createFile()];
         $fileNames = array_map(
-            function($fileLocation) {
+            function ($fileLocation) {
                 return array_slice(explode('/', $fileLocation), -1)[0];
             },
             $fileLocations
@@ -209,7 +213,7 @@ class FieldTest extends PHPUnit_Framework_TestCase
         $validatedData = explode(" ", $field->getValidatedData());
 
         $expectedData = array_map(
-            function($fileName) {
+            function ($fileName) {
                 return SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . Cipher::cleanFilename($fileName);
             },
             $fileNames
