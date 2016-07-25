@@ -14,7 +14,7 @@ class SecureUploadFieldBuilder extends FieldBuilder implements SecureUploadField
      */
     public function build()
     {
-        if ($this->type === 'secure-upload') {
+        if ($this->type === static::TYPE_SECURE_UPLOAD || $this->type === static::TYPE_SECURE_UPLOAD_MULTIPLE) {
             return new SecureUploadField(
                 $this->classes,
                 $this->data,

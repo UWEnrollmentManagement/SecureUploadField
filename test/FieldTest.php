@@ -15,7 +15,14 @@ class FieldTest extends PHPUnit_Framework_TestCase
     public function testBuilder()
     {
         $field = SecureUploadFieldBuilder::begin()
-            ->setType('secure-upload')
+            ->setType(SecureUploadFieldBuilder::TYPE_SECURE_UPLOAD)
+            ->setLabel('label')
+            ->build();
+
+        $this->assertInstanceOf(SecureUploadField::class, $field);
+
+        $field = SecureUploadFieldBuilder::begin()
+            ->setType(SecureUploadFieldBuilder::TYPE_SECURE_UPLOAD_MULTIPLE)
             ->setLabel('label')
             ->build();
 
