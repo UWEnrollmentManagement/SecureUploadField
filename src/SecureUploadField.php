@@ -45,7 +45,7 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
     protected function getFileNames()
     {
         return $this->getType() === static::TYPE_SECURE_UPLOAD_MULTIPLE ? $_FILES[$this->getSlug()]['name'] :
-                                                                          [$_FILES[$this->getSlug()]['name']];
+            [$_FILES[$this->getSlug()]['name']];
     }
 
     /**
@@ -58,7 +58,7 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
     protected function getFileLocations()
     {
         return $this->getType() === static::TYPE_SECURE_UPLOAD_MULTIPLE ? $_FILES[$this->getSlug()]['tmp_name'] :
-                                                                          [$_FILES[$this->getSlug()]['tmp_name']];
+            [$_FILES[$this->getSlug()]['tmp_name']];
     }
 
     /**
@@ -68,7 +68,18 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
      */
     public function wasSubmitted()
     {
-        return array_key_exists($this->getSlug(), $_FILES) === true && $this->getFileNames() !== [];
+        if (array_key_exists($this->getSlug(), $_FILES) === false) {
+            return false;
+        }
+
+        $nonBlankFilenames = array_filter(
+            $this->getFileNames(),
+            function ($fileName) {
+                return $fileName !== '';
+            }
+        );
+
+        return sizeof($nonBlankFilenames) > 0;
     }
 
     /**
@@ -85,17 +96,17 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
             $destinationPaths = [];
             foreach (array_combine($fileLocations, $fileNames) as $fileLocation => $fileName) {
                 $fileName = Cipher::cleanFilename($this->fileNamePrefix . $fileName);
-                
+
                 Cipher::encrypt(
                     $fileName,
                     $fileLocation,
                     SECURE_UPLOAD_DESTINATION_PATH_PREFIX,
                     SECURE_UPLOAD_PUBLIC_KEY_PATH
                 );
-                
+
                 $destinationPaths[] = SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . $fileName;
             }
-            
+
             $this->destinationPath = implode(" ", $destinationPaths);
         }
 

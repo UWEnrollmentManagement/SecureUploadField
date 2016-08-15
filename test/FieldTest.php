@@ -39,6 +39,10 @@ class FieldTest extends PHPUnit_Framework_TestCase
 
         $this->assertFalse($field->wasSubmitted());
 
+        $_FILES[$slug]['name'] = '';
+
+        $this->assertFalse($field->wasSubmitted());
+
         $_FILES[$slug]['name'] = 'test';
 
         $this->assertTrue($field->wasSubmitted());
