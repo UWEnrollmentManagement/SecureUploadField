@@ -105,7 +105,7 @@ class FieldTest extends PHPUnit_Framework_TestCase
         ];
 
         // Force encryption
-        $field->getValidatedData();
+        $field->validate();
 
         $location = SECURE_UPLOAD_DESTINATION_PATH_PREFIX . '/' . scandir(SECURE_UPLOAD_DESTINATION_PATH_PREFIX)[2];
 
@@ -136,6 +136,7 @@ class FieldTest extends PHPUnit_Framework_TestCase
             'name' => $fileName,
         ];
 
+        $field->validate();
         $validatedData = $field->getValidatedData();
         $expectedData = SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . $prefix . Cipher::cleanFilename($fileName);
 
@@ -169,7 +170,7 @@ class FieldTest extends PHPUnit_Framework_TestCase
         sort($originalData);
 
         // Force encryption
-        $field->getValidatedData();
+        $field->validate();
 
         $locations = scandir(SECURE_UPLOAD_DESTINATION_PATH_PREFIX);
         $locations = array_filter(
@@ -217,6 +218,7 @@ class FieldTest extends PHPUnit_Framework_TestCase
             'name' => $fileNames,
         ];
 
+        $field->validate();
         $validatedData = explode(" ", $field->getValidatedData());
 
         $expectedData = array_map(
