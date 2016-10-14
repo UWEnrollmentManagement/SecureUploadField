@@ -15,8 +15,8 @@ use UWDOEM\SecureUploads\Cipher;
  */
 class SecureUploadField extends Field implements SecureUploadFieldInterface
 {
-    /** @var string */
-    protected $destinationPath = "";
+    /** @var string[] */
+    protected $destinationPaths = [];
 
     /** @var string */
     protected $fileNamePrefix = "";
@@ -42,7 +42,7 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
      *
      * @return string[]
      */
-    protected function getFileNames()
+    protected function getUploadedFileNames()
     {
         return $this->getType() === static::TYPE_SECURE_UPLOAD_MULTIPLE ? $_FILES[$this->getSlug()]['name'] :
             [$_FILES[$this->getSlug()]['name']];
@@ -55,10 +55,26 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
      *
      * @return string[]
      */
-    protected function getFileLocations()
+    protected function getUploadedFileLocations()
     {
         return $this->getType() === static::TYPE_SECURE_UPLOAD_MULTIPLE ? $_FILES[$this->getSlug()]['tmp_name'] :
             [$_FILES[$this->getSlug()]['tmp_name']];
+    }
+
+    /**
+     * Return a list of file names that were submitted as strings.
+     *
+     * @return string[]
+     */
+    protected function getSubmittedFileNames()
+    {
+        $submittedFileNames = parent::getSubmitted();
+
+        if (is_string($submittedFileNames)) {
+            $submittedFileNames = [$submittedFileNames];
+        }
+
+        return $submittedFileNames;
     }
 
     /**
@@ -70,7 +86,7 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
      *
      * @return boolean
      */
-    protected function wasSubmittedAsFileName()
+    protected function wasSubmittedAsFileNames()
     {
         return array_key_exists($this->getSlug(), $_POST) && $_POST[$this->getSlug()] !== '';
     }
@@ -80,14 +96,14 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
      * uploaded file.
      * @return boolean
      */
-    protected function wasSubmittedAsFile()
+    protected function wasSubmittedAsFiles()
     {
         if (array_key_exists($this->getSlug(), $_FILES) === false) {
             return false;
         }
 
         $nonBlankFilenames = array_filter(
-            $this->getFileNames(),
+            $this->getUploadedFileNames(),
             function ($fileName) {
                 return $fileName !== '';
             }
@@ -103,33 +119,33 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
      */
     public function wasSubmitted()
     {
-        return $this->wasSubmittedAsFile() || $this->wasSubmittedAsFileName();
+        return $this->wasSubmittedAsFiles() || $this->wasSubmittedAsFileNames();
     }
 
     /**
      * @return void
      */
-    public function validateFilenameSubmission()
+    public function validateFilenameSubmissions()
     {
-        $filenames = $this->getSubmitted();
+        foreach ($this->getSubmittedFileNames() as $filename) {
+            $destinationPath = SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . Cipher::cleanFilename($filename);
 
-        $destinationPaths = [];
-        foreach (explode(' ', $filenames) as $filename) {
-            $destinationPaths[] = SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . Cipher::cleanFilename($filename);
+            if (strpos($this->getInitial(), $destinationPath) === false) {
+                $this->addError("Unrecognized file $filename.");
+            } else {
+                $this->destinationPaths[] = $destinationPath;
+            }
         }
-
-        $this->destinationPath = implode(" ", $destinationPaths);
     }
 
     /**
      * @return void
      */
-    public function validateFileUploadSubmssion()
+    public function validateFileUploadSubmissions()
     {
-        $fileNames = $this->getFileNames();
-        $fileLocations = $this->getFileLocations();
+        $fileNames = $this->getUploadedFileNames();
+        $fileLocations = $this->getUploadedFileLocations();
 
-        $destinationPaths = [];
         foreach (array_combine($fileLocations, $fileNames) as $fileLocation => $fileName) {
             $fileName = Cipher::cleanFilename($this->fileNamePrefix . $fileName);
 
@@ -140,10 +156,8 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
                 SECURE_UPLOAD_PUBLIC_KEY_PATH
             );
 
-            $destinationPaths[] = SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . $fileName;
+            $this->destinationPaths[] = SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . $fileName;
         }
-
-        $this->destinationPath = implode(" ", $destinationPaths);
     }
 
     /**
@@ -159,11 +173,14 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
     {
         parent::validate();
 
-        if ($this->isValid() === true && $this->destinationPath === "") {
-            if ($this->wasSubmittedAsFile() === true) {
-                $this->validateFileUploadSubmssion();
-            } else {
-                $this->validateFilenameSubmission();
+        if ($this->isValid() === true && $this->destinationPaths === []) {
+
+            if ($this->wasSubmittedAsFiles() === true) {
+                $this->validateFileUploadSubmissions();
+            }
+
+            if ($this->wasSubmittedAsFileNames() === true) {
+                $this->validateFilenameSubmissions();
             }
         }
     }
@@ -175,7 +192,7 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
      */
     public function getValidatedData()
     {
-        return $this->destinationPath;
+        return implode(' ', $this->destinationPaths);
     }
 
     /**
@@ -185,8 +202,8 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
      */
     public function getSubmitted()
     {
-        if ($this->destinationPath !== '') {
-            return $this->destinationPath;
+        if ($this->destinationPaths !== []) {
+            return implode(' ', $this->destinationPaths);
         } else {
             return parent::getSubmitted();
         }

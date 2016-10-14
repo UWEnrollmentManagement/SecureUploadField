@@ -1,5 +1,17 @@
 <span class="secure-upload-field {{ classes|join(' ') }}" {{ data|writedata|raw }}>
-    <input type="file" name="{{ slug }}" />
+    <input type="file" name="{{ slug }}" {% if initial %}disabled{% endif %}/>
+        {% if initial %}
+            <span id="{{ slug }}-initial" class="secure-upload initial">
+                <input name="{{ slug }}" type="hidden" value="{{ initial|saferaw|raw|split('/')|last }}">
+                <a class="link" target="_blank" href="{{ initial|escape }}">{{ initial|saferaw|raw|split('/')|last|split('-')|slice(3)|join('-') }}</a>
+                <a href="#" class="remover" onclick="
+                        $('#{{ slug }}-initial').remove();
+                        $('input[name={{ slug }}]').attr('disabled', false);
+                        return false;
+                ">&times;</a>
+            </span>
+        {% endif %}
+
 </span>
 
 {% include "field/errors.twig" %}

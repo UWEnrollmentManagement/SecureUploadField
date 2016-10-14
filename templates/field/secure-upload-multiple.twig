@@ -1,5 +1,12 @@
 <span class="secure-upload-field {{ classes|join(' ') }}" {{ data|writedata|raw }}>
-    <input type="file" name="{{ slug }}[]" multiple/>
+    <input type="file" id="{{ slug }}-input" name="{{ slug }}[]" multiple/>
+    {% for key, link in initial|split(' ') %}
+        <span id="{{ slug }}-{{ key }}" class="secure-upload initial">
+            <input name="{{ slug }}[]" type="hidden" value="{{ link|saferaw|raw|split('/')|last }}">
+            <a class="link" target="_blank" href="{{ link|escape }}">{{ link|saferaw|raw|split('/')|last|split('-')|slice(3)|join('-') }}</a>
+            <a href="#" class="remover" onclick="$('#{{ slug }}-{{ key }}').remove();return false;">&times;</a>
+        </span>
+    {% endfor %}
 </span>
 
 {% include "field/errors.twig" %}
