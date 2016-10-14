@@ -70,7 +70,7 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
     {
         $submittedFileNames = parent::getSubmitted();
 
-        if (is_string($submittedFileNames)) {
+        if (is_string($submittedFileNames) === true) {
             $submittedFileNames = [$submittedFileNames];
         }
 
@@ -88,7 +88,7 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
      */
     protected function wasSubmittedAsFileNames()
     {
-        return array_key_exists($this->getSlug(), $_POST) && $_POST[$this->getSlug()] !== '';
+        return array_key_exists($this->getSlug(), $_POST) === true && $_POST[$this->getSlug()] !== '';
     }
 
     /**
@@ -174,7 +174,6 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
         parent::validate();
 
         if ($this->isValid() === true && $this->destinationPaths === []) {
-
             if ($this->wasSubmittedAsFiles() === true) {
                 $this->validateFileUploadSubmissions();
             }
