@@ -147,16 +147,19 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
         $fileLocations = $this->getUploadedFileLocations();
 
         foreach (array_combine($fileLocations, $fileNames) as $fileLocation => $fileName) {
-            $fileName = Cipher::cleanFilename($this->fileNamePrefix . $fileName);
 
-            Cipher::encrypt(
-                $fileName,
-                $fileLocation,
-                SECURE_UPLOAD_DESTINATION_PATH_PREFIX,
-                SECURE_UPLOAD_PUBLIC_KEY_PATH
-            );
+            if (trim($fileName) !== '' && trim($fileLocation) !== '') {
+                $fileName = Cipher::cleanFilename($this->fileNamePrefix . $fileName);
 
-            $this->destinationPaths[] = SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . $fileName;
+                Cipher::encrypt(
+                    $fileName,
+                    $fileLocation,
+                    SECURE_UPLOAD_DESTINATION_PATH_PREFIX,
+                    SECURE_UPLOAD_PUBLIC_KEY_PATH
+                );
+
+                $this->destinationPaths[] = SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . $fileName;
+            }
         }
     }
 
@@ -182,6 +185,19 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
                 $this->validateFilenameSubmissions();
             }
         }
+    }
+
+    /**
+     * Clear the submitted data.
+     *
+     * @param string $data
+     * @return FieldInterface
+     */
+    public function clearDestinationPaths($data)
+    {
+        $this->destinationPaths = [];
+
+        return $this;
     }
 
     /**

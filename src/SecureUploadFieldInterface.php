@@ -17,4 +17,10 @@ interface SecureUploadFieldInterface extends FieldInterface, SecureUploadFieldCo
      * @return FieldInterface
      */
     public function setFileNamePrefix($fileNamePrefix);
+
+    /**
+     * @param string $fileNamePrefix
+     * @return FieldInterface
+     */
+    public function clearDestinationPaths($fileNamePrefix);
 }
