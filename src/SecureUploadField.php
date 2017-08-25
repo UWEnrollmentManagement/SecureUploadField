@@ -130,11 +130,7 @@ class SecureUploadField extends Field implements SecureUploadFieldInterface
         foreach ($this->getSubmittedFileNames() as $filename) {
             $destinationPath = SECURE_UPLOAD_CIPHER_FILE_DESTINATION_PATH . Cipher::cleanFilename($filename);
 
-            if (strpos($this->getInitial(), $destinationPath) === false) {
-                $this->addError("Unrecognized file $filename.");
-            } else {
-                $this->destinationPaths[] = $destinationPath;
-            }
+            $this->destinationPaths[] = $destinationPath;
         }
     }
 
